@@ -690,7 +690,7 @@ export default function App() {
         {`
           @media print {
             @page {
-              size: ${gameType === 'triangle' ? 'A4 landscape' : 'A4 portrait'};
+              size: ${previewMode === 'worksheet' ? 'A4 portrait' : (gameType === 'triangle' || gameType === 'tablecloth' ? 'A4 landscape' : 'A4 portrait')};
               margin: 0;
             }
             body {
@@ -699,7 +699,7 @@ export default function App() {
               background: white;
             }
             #game-canvas {
-              width: ${gameType === 'triangle' ? '297mm' : '210mm'} !important;
+              width: ${previewMode === 'worksheet' ? '210mm' : (gameType === 'triangle' || gameType === 'tablecloth' ? '297mm' : '210mm')} !important;
               padding: 0 !important;
               box-shadow: none !important;
               transform: none !important;
@@ -707,9 +707,9 @@ export default function App() {
               background: white !important;
             }
             .game-page {
-              width: ${gameType === 'triangle' ? '297mm' : '210mm'} !important;
-              height: ${gameType === 'triangle' ? '210mm' : '297mm'} !important;
-              padding: ${gameType === 'triangle' ? '5mm' : '15mm'} !important;
+              width: ${previewMode === 'worksheet' ? '210mm' : (gameType === 'triangle' || gameType === 'tablecloth' ? '297mm' : '210mm')} !important;
+              height: ${previewMode === 'worksheet' ? '297mm' : (gameType === 'triangle' || gameType === 'tablecloth' ? '210mm' : '297mm')} !important;
+              padding: ${previewMode === 'worksheet' ? '8mm' : (gameType === 'triangle' ? '5mm' : (gameType === 'tablecloth' ? '0' : '15mm'))} !important;
               page-break-after: always !important;
               break-after: page !important;
               display: flex !important;
@@ -2097,7 +2097,15 @@ function GameRenderer({ type, data, mode, bgImage, theme, triangleFontSize, isPu
  * Worksheet Renderer Component
  */
 const WorksheetRenderer = ({ data, lines = 2, type = 'exercise' }: { data: GameData[], lines?: number, type?: 'exercise' | 'lesson' }) => {
-  const questionsPerPage = Math.max(6, 21 - (lines * 3) - (type === 'lesson' ? 2 : 0)); // Adjust questions per page based on lines
+  let baseQuestions = 14;
+  if (lines === 1) baseQuestions = 18;
+  else if (lines === 2) baseQuestions = 14;
+  else if (lines === 3) baseQuestions = 12;
+  else if (lines === 4) baseQuestions = 10;
+  else if (lines >= 5) baseQuestions = 8;
+  
+  const questionsPerPage = type === 'lesson' ? baseQuestions - 2 : baseQuestions;
+  
   const pages = [];
   for (let i = 0; i < data.length; i += questionsPerPage) {
     pages.push(data.slice(i, i + questionsPerPage));
