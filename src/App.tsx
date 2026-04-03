@@ -168,7 +168,7 @@ export default function App() {
   const [dominoTheme, setDominoTheme] = useState<DominoTheme>('classic');
   const [data, setData] = useState<GameData[]>([{ q: '', a: '' }]);
   const [bgImage, setBgImage] = useState<string | null>(null);
-  const [previewMode, setPreviewMode] = useState<'student' | 'answer' | 'worksheet'>('answer');
+  const [previewMode, setPreviewMode] = useState<'student' | 'answer' | 'worksheet' | 'worksheet-smart'>('answer');
   const [worksheetLines, setWorksheetLines] = useState<number>(2);
   const [worksheetType, setWorksheetType] = useState<'exercise' | 'lesson'>('exercise');
   const [triangleFontSize, setTriangleFontSize] = useState<number>(16);
@@ -690,8 +690,8 @@ export default function App() {
         {`
           @media print {
             @page {
-              size: ${previewMode === 'worksheet' ? 'A4 portrait' : (gameType === 'triangle' || gameType === 'tablecloth' ? 'A4 landscape' : 'A4 portrait')};
-              margin: 0;
+              size: ${previewMode.includes('worksheet') ? 'A4 portrait' : (gameType === 'triangle' || gameType === 'tablecloth' ? 'A4 landscape' : 'A4 portrait')};
+              margin: ${previewMode === 'worksheet-smart' ? '15mm 15mm 20mm 15mm' : '0'};
             }
             body {
               margin: 0;
@@ -699,7 +699,7 @@ export default function App() {
               background: white;
             }
             #game-canvas {
-              width: ${previewMode === 'worksheet' ? '210mm' : (gameType === 'triangle' || gameType === 'tablecloth' ? '297mm' : '210mm')} !important;
+              width: ${previewMode.includes('worksheet') ? '210mm' : (gameType === 'triangle' || gameType === 'tablecloth' ? '297mm' : '210mm')} !important;
               padding: 0 !important;
               box-shadow: none !important;
               transform: none !important;
@@ -707,7 +707,7 @@ export default function App() {
               background: white !important;
             }
             .game-page {
-              width: ${previewMode === 'worksheet' ? '210mm' : (gameType === 'triangle' || gameType === 'tablecloth' ? '297mm' : '210mm')} !important;
+              width: ${previewMode.includes('worksheet') ? '210mm' : (gameType === 'triangle' || gameType === 'tablecloth' ? '297mm' : '210mm')} !important;
               height: ${previewMode === 'worksheet' ? '297mm' : (gameType === 'triangle' || gameType === 'tablecloth' ? '210mm' : '297mm')} !important;
               padding: ${previewMode === 'worksheet' ? '8mm' : (gameType === 'triangle' ? '5mm' : (gameType === 'tablecloth' ? '0' : '15mm'))} !important;
               page-break-after: always !important;
@@ -715,6 +715,21 @@ export default function App() {
               display: flex !important;
               flex-direction: column !important;
               background: white !important;
+            }
+            .game-page.smart-mode {
+              width: 100% !important;
+              height: auto !important;
+              padding: 0 !important;
+              display: block !important;
+              box-shadow: none !important;
+              page-break-after: auto !important;
+              break-after: auto !important;
+            }
+            .smart-footer {
+              position: fixed;
+              bottom: 0;
+              left: 0;
+              right: 0;
             }
             .no-print {
               display: none !important;
@@ -1028,7 +1043,15 @@ export default function App() {
                         previewMode === 'worksheet' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400'
                       }`}
                     >
-                      Phiếu học tập
+                      Phiếu in 1 (Cố định)
+                    </button>
+                    <button 
+                      onClick={() => setPreviewMode('worksheet-smart')}
+                      className={`px-5 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
+                        previewMode === 'worksheet-smart' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400'
+                      }`}
+                    >
+                      Phiếu in 2 (Tự động)
                     </button>
                   </div>
 
@@ -1053,7 +1076,7 @@ export default function App() {
                     </div>
                   )}
 
-                  {previewMode === 'worksheet' && (
+                  {previewMode.includes('worksheet') && (
                     <>
                       <div className="flex items-center gap-3 bg-slate-100 p-1 rounded-2xl">
                         <button 
@@ -2049,7 +2072,121 @@ const DominoGame = ({ data, mode, cutLineClass, theme = 'classic', bgImage, isPu
   );
 };
 
-function GameRenderer({ type, data, mode, bgImage, theme, triangleFontSize, isPuzzleMode, tarsiaShape, showSymbols = false, worksheetLines = 2, worksheetType = 'exercise' }: { type: GameType, data: GameData[], mode: 'student' | 'answer' | 'worksheet', bgImage: string | null, theme: DominoTheme, triangleFontSize?: number, isPuzzleMode?: boolean, tarsiaShape?: TarsiaShape, showSymbols?: boolean, worksheetLines?: number, worksheetType?: 'exercise' | 'lesson' }) {
+/**
+ * Worksheet Smart Renderer Component
+ * Uses CSS columns/grid and browser pagination to automatically break pages
+ */
+const WorksheetSmartRenderer = ({ data, lines = 2, type = 'exercise' }: { data: GameData[], lines?: number, type?: 'exercise' | 'lesson' }) => {
+  return (
+    <div className="bg-slate-100 print:bg-white flex flex-col items-center">
+      <div className="game-page smart-mode bg-white p-8 w-[210mm] min-h-[297mm] text-black font-serif shadow-lg print:shadow-none print:p-0 relative box-border">
+        
+        {/* Print-only repeating footer */}
+        <div className="hidden print:block smart-footer bg-white pt-2 z-50">
+          <div className="text-[10pt] font-bold italic text-black border-t border-black pt-1 text-center">
+            Lớp Toán - Thầy Vũ Tiến Lực - Trường THPT Nguyễn Hữu Cảnh
+          </div>
+        </div>
+
+        {/* Header */}
+        <div className="mb-4 shrink-0">
+          <div className="flex justify-between items-start mb-4">
+            <div className="w-2/5 text-center">
+              <div className="font-bold text-sm">TRƯỜNG THPT NGUYỄN HỮU CẢNH</div>
+              <div className="font-bold text-sm border-b border-black inline-block pb-0.5">TỔ TOÁN</div>
+            </div>
+            <div className="w-3/5 text-center">
+              <div className="font-bold text-sm">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
+              <div className="font-bold text-sm border-b border-black inline-block pb-0.5">Độc lập - Tự do - Hạnh phúc</div>
+            </div>
+          </div>
+          
+          <div className="text-center mb-6">
+            <h1 className="text-xl font-bold uppercase mb-1">PHIẾU HỌC TẬP</h1>
+            <div className="italic text-sm">Môn: Toán</div>
+          </div>
+
+          <div className="flex flex-wrap gap-y-3 gap-x-6 text-sm mb-2">
+            <div className="flex items-end">
+              <span className="font-bold whitespace-nowrap mr-2">Họ và tên:</span>
+              <span className="w-48 border-b border-dotted border-black"></span>
+            </div>
+            <div className="flex items-end">
+              <span className="font-bold whitespace-nowrap mr-2">Lớp:</span>
+              <span className="w-24 border-b border-dotted border-black"></span>
+            </div>
+            
+            {type === 'lesson' ? (
+              <div className="flex flex-col w-full mt-2 gap-2">
+                <span className="font-bold whitespace-nowrap text-red-600 print:text-black">Phần ghi chép kiến thức trọng tâm:</span>
+                <div className="border-b border-dotted border-black w-full h-6"></div>
+                <div className="border-b border-dotted border-black w-full h-6"></div>
+                <div className="border-b border-dotted border-black w-full h-6"></div>
+                <div className="border-b border-dotted border-black w-full h-6"></div>
+                <div className="border-b border-dotted border-black w-full h-6"></div>
+              </div>
+            ) : (
+              <div className="flex w-full items-end mt-1">
+                <span className="font-bold whitespace-nowrap mr-2 text-red-600 print:text-black">Điểm:</span>
+                <span className="w-24 border-b border-dotted border-black"></span>
+                <span className="font-bold whitespace-nowrap mx-2 text-red-600 print:text-black">Nhận xét của giáo viên:</span>
+                <span className="flex-1 border-b border-dotted border-black"></span>
+              </div>
+            )}
+          </div>
+          <div className="border-b-[1.5px] border-black w-full mt-3"></div>
+        </div>
+
+        {/* Grid of ALL questions */}
+        <div className="grid grid-cols-2 gap-x-8 gap-y-6 mt-4 content-start">
+          {data.map((item, index) => (
+            <div key={index} className="flex flex-col break-inside-avoid">
+              <div className="flex gap-1.5 items-start">
+                <span className="font-bold text-[11pt] whitespace-nowrap">Câu {index + 1}:</span>
+                <div className="flex-1 text-[11pt] leading-snug">
+                  <MathText text={item.q} />
+                </div>
+              </div>
+              <div className="mt-2 pl-12 pr-2">
+                {Array.from({ length: lines }).map((_, i) => (
+                  <div key={i} className="border-b border-dotted border-black w-full h-6"></div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Footer (Reflection) */}
+        <div className="mt-8 pt-4 border-t-2 border-black shrink-0 break-inside-avoid">
+          <div className="font-bold italic mb-2">Phần tự đánh giá:</div>
+          <div className="grid grid-cols-3 gap-4 text-sm">
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 border border-black"></div>
+              <span>Hoàn thành tốt</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 border border-black"></div>
+              <span>Hoàn thành</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 border border-black"></div>
+              <span>Cần cố gắng thêm</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Screen-only footer */}
+        <div className="mt-12 pt-6 pb-2 text-center shrink-0 print:hidden">
+          <div className="text-[10pt] font-bold italic text-slate-600 border-t border-slate-300 pt-2">
+            Lớp Toán - Thầy Vũ Tiến Lực - Trường THPT Nguyễn Hữu Cảnh
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+function GameRenderer({ type, data, mode, bgImage, theme, triangleFontSize, isPuzzleMode, tarsiaShape, showSymbols = false, worksheetLines = 2, worksheetType = 'exercise' }: { type: GameType, data: GameData[], mode: 'student' | 'answer' | 'worksheet' | 'worksheet-smart', bgImage: string | null, theme: DominoTheme, triangleFontSize?: number, isPuzzleMode?: boolean, tarsiaShape?: TarsiaShape, showSymbols?: boolean, worksheetLines?: number, worksheetType?: 'exercise' | 'lesson' }) {
   const shuffle = React.useCallback((array: any[]) => {
     const newArray = [...array];
     for (let i = newArray.length - 1; i > 0; i--) {
@@ -2087,6 +2224,7 @@ function GameRenderer({ type, data, mode, bgImage, theme, triangleFontSize, isPu
   }
 
   if (mode === 'worksheet') return <WorksheetRenderer data={data} lines={worksheetLines} type={worksheetType} />;
+  if (mode === 'worksheet-smart') return <WorksheetSmartRenderer data={data} lines={worksheetLines} type={worksheetType} />;
   if (type === 'matching') return <MatchingGame data={displayData} mode={mode} cutLineClass={cutLineClass} theme={theme} />;
   if (type === 'triangle') return <TriangleGame data={displayData} mode={mode} cutLineClass={cutLineClass} theme={theme} fontSize={triangleFontSize} tarsiaShape={tarsiaShape} showSymbols={showSymbols} />;
   if (type === 'tablecloth') return <TableclothGame data={data} mode={mode} />;
