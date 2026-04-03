@@ -725,12 +725,6 @@ export default function App() {
               page-break-after: auto !important;
               break-after: auto !important;
             }
-            .smart-footer {
-              position: fixed;
-              bottom: 0;
-              left: 0;
-              right: 0;
-            }
             .no-print {
               display: none !important;
             }
@@ -2078,32 +2072,20 @@ const DominoGame = ({ data, mode, cutLineClass, theme = 'classic', bgImage, isPu
  */
 const WorksheetSmartRenderer = ({ data, lines = 2, type = 'exercise' }: { data: GameData[], lines?: number, type?: 'exercise' | 'lesson' }) => {
   return (
-    <div className="bg-slate-100 print:bg-white flex flex-col items-center">
-      <div className="game-page smart-mode bg-white p-8 w-[210mm] min-h-[297mm] text-black font-serif shadow-lg print:shadow-none print:p-0 relative box-border">
+    <div className="bg-slate-100 print:bg-white flex flex-col items-center print:block">
+      <div className="game-page smart-mode bg-white p-8 w-[210mm] min-h-[297mm] text-black font-serif shadow-lg print:shadow-none print:w-full print:max-w-full print:p-0 print:m-0 relative box-border">
         
-        {/* Print-only repeating footer */}
-        <div className="hidden print:block smart-footer bg-white pt-2 z-50">
-          <div className="text-[10pt] font-bold italic text-black border-t border-black pt-1 text-center">
-            Lớp Toán - Thầy Vũ Tiến Lực - Trường THPT Nguyễn Hữu Cảnh
-          </div>
-        </div>
-
         {/* Header */}
-        <div className="mb-4 shrink-0">
-          <div className="flex justify-between items-start mb-4">
+        <div className="mb-6 shrink-0">
+          <div className="flex justify-between items-start mb-6">
             <div className="w-2/5 text-center">
-              <div className="font-bold text-sm">TRƯỜNG THPT NGUYỄN HỮU CẢNH</div>
-              <div className="font-bold text-sm border-b border-black inline-block pb-0.5">TỔ TOÁN</div>
+              <div className="font-bold text-[11pt] uppercase">TRƯỜNG THPT NGUYỄN HỮU CẢNH</div>
+              <div className="text-[11pt] font-bold border-b border-black inline-block pb-0.5 px-6 mt-1">TỔ TOÁN</div>
             </div>
             <div className="w-3/5 text-center">
-              <div className="font-bold text-sm">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
-              <div className="font-bold text-sm border-b border-black inline-block pb-0.5">Độc lập - Tự do - Hạnh phúc</div>
+              <h1 className="text-xl font-bold uppercase tracking-tight mb-1">PHIẾU HỌC TẬP</h1>
+              <div className="italic text-sm">Môn: Toán</div>
             </div>
-          </div>
-          
-          <div className="text-center mb-6">
-            <h1 className="text-xl font-bold uppercase mb-1">PHIẾU HỌC TẬP</h1>
-            <div className="italic text-sm">Môn: Toán</div>
           </div>
 
           <div className="flex flex-wrap gap-y-3 gap-x-6 text-sm mb-2">
@@ -2137,10 +2119,10 @@ const WorksheetSmartRenderer = ({ data, lines = 2, type = 'exercise' }: { data: 
           <div className="border-b-[1.5px] border-black w-full mt-3"></div>
         </div>
 
-        {/* Grid of ALL questions */}
-        <div className="grid grid-cols-2 gap-x-8 gap-y-6 mt-4 content-start">
+        {/* Flex container instead of Grid for better print pagination */}
+        <div className="flex flex-wrap -mx-4 mt-4">
           {data.map((item, index) => (
-            <div key={index} className="flex flex-col break-inside-avoid">
+            <div key={index} className="w-1/2 px-4 mb-6 break-inside-avoid" style={{ pageBreakInside: 'avoid' }}>
               <div className="flex gap-1.5 items-start">
                 <span className="font-bold text-[11pt] whitespace-nowrap">Câu {index + 1}:</span>
                 <div className="flex-1 text-[11pt] leading-snug">
@@ -2157,7 +2139,7 @@ const WorksheetSmartRenderer = ({ data, lines = 2, type = 'exercise' }: { data: 
         </div>
 
         {/* Footer (Reflection) */}
-        <div className="mt-8 pt-4 border-t-2 border-black shrink-0 break-inside-avoid">
+        <div className="mt-8 pt-4 border-t-2 border-black shrink-0 break-inside-avoid" style={{ pageBreakInside: 'avoid' }}>
           <div className="font-bold italic mb-2">Phần tự đánh giá:</div>
           <div className="grid grid-cols-3 gap-4 text-sm">
             <div className="flex items-center gap-2">
@@ -2175,9 +2157,9 @@ const WorksheetSmartRenderer = ({ data, lines = 2, type = 'exercise' }: { data: 
           </div>
         </div>
 
-        {/* Screen-only footer */}
-        <div className="mt-12 pt-6 pb-2 text-center shrink-0 print:hidden">
-          <div className="text-[10pt] font-bold italic text-slate-600 border-t border-slate-300 pt-2">
+        {/* Global Footer */}
+        <div className="mt-12 pt-6 pb-2 text-center shrink-0 break-inside-avoid" style={{ pageBreakInside: 'avoid' }}>
+          <div className="text-[10pt] font-bold italic text-slate-600 print:text-black border-t border-slate-300 print:border-black pt-2">
             Lớp Toán - Thầy Vũ Tiến Lực - Trường THPT Nguyễn Hữu Cảnh
           </div>
         </div>
